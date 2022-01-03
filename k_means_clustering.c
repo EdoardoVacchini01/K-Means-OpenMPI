@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include<string.h>
+#include <string.h>
 
 #define N_COORDINATES 2
-#define N_CLUSTERS 5
-#define PATH_LENGTH 100
 #define BUFFER_LENGTH 1000
 
 typedef struct {
@@ -13,9 +11,7 @@ typedef struct {
 
 typedef struct {
     double coordinates[N_COORDINATES];
-    unsigned int clusterId;
 } centroid_t;
-
 
 centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nClusters) {
     centroid_t *centroids = NULL;
@@ -36,17 +32,16 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
             (centroids + cluster)->coordinates[coordinate] =
                 (points + cluster)->coordinates[coordinate];
         }
-        (centroids + cluster)->clusterId = cluster;
     }
 
     return centroids;
 }
 
-
-point *readDataset(int *nPoints, char path[PATH_LENGTH]) {
-    FILE *file;
-    if (!( file = fopen(path, "r") ))
+point_t *readDataset(int *nPoints, char *path) {
+    FILE *file = fopen(path, "r");
+    if (!file) {
         return NULL;
+    }
 
     // The first line of the file contains the number of points in the file
     // the array of points is prepared accordingly so
@@ -61,7 +56,7 @@ point *readDataset(int *nPoints, char path[PATH_LENGTH]) {
     // token and if the number of token is different from the number of 
     // dimensions stops the procedure and returns NULL
     int converted, i;
-    char delimiter = ' ', *token = NULL;
+    char *delimiter = " ", *token = NULL;
     for ( i = 0; fgets(buffer, sizeof(buffer), file); i++ ) {
         converted = 0;
         token = strtok( buffer, delimiter );
@@ -79,17 +74,18 @@ point *readDataset(int *nPoints, char path[PATH_LENGTH]) {
     return points;
 }
 
+double getSquaredDistance(point_t *point, centroid_t *centroid) {
+    unsigned int coordinate = 0;
+    double difference = 0.0;
+    double squaredDistance = 0.0;
 
-double squaredDistance(point_t *point, centroid_t *centroid){
-    int i, distance;
-    double squaredDistance = 0;
-    for(i = 0; i < N_COORDINATES; i++){
-        distance = point->coordiantes[i] - centroid->coordinate[i];
-        squaredDistance += distance * distance;
+    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
+        difference = point->coordinates[coordinate] - centroid->coordinates[coordinate];
+        squaredDistance += difference * difference;
     }
+
     return squaredDistance;
 }
-
 
 int main() {
     
