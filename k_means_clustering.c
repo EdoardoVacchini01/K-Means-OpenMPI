@@ -18,6 +18,19 @@ typedef struct {
     unsigned int nPoints;
 } prototype_t;
 
+double getSquaredDistance(point_t *point, centroid_t *centroid) {
+    unsigned int coordinate = 0;
+    double difference = 0.0;
+    double squaredDistance = 0.0;
+
+    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
+        difference = point->coordinates[coordinate] - centroid->coordinates[coordinate];
+        squaredDistance += difference * difference;
+    }
+
+    return squaredDistance;
+}
+
 centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nClusters) {
     centroid_t *centroids = NULL;
     unsigned int cluster = 0;
@@ -40,6 +53,46 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
     }
 
     return centroids;
+}
+
+void kMeansClustering(centroid_t *centroids, unsigned int nClusters, point_t *dataset, unsigned int nPoints, unsigned int maxIterations){
+    centroids = initCentroids(dataset, nPoints, nClusters);
+
+    int i = 0, j, k, isChanged, oldCluster;
+    double minimumDistance, distance;
+    prototype_t *protoypes = malloc(nClusters * sizeof(*centroids)); //STA NEL MAIN E POI LO SI PASSA COME PARAMETRO O QUI?
+
+    do{
+        isChanged = 0;
+
+        //azzera le somme delle coordinate
+        for(k = 0; k < nClusters; k++)
+            for(j = 0; j < N_COORDINATES; j++){
+                protoypes[k].pointsCoordinatesSum[j] = 0;
+                protoypes[k].nPoints = 0;
+            }
+
+        //assegnare a tutti i punti il cluster basandosi sulla distanza
+        for(j = 0; j < nPoints; j++){
+            minimumDistance = __DBL_MAX__;
+            oldCluster = dataset[j].clusterId;
+            for(k = 0; k < nClusters; k++){
+                distance = getSquaredDistance(dataset[j], centroids[j]);
+                if(distance < minimumDistance){
+                    minimumDistance = distance;
+                    dataset[j].clusterId = k;
+                }
+            }
+            updatePrototype(protoypes[dataset[j].clusterId], dataset[j]);
+            if(oldCluster != dataset[j].clusterId)
+                isChanged = 1;
+        }
+
+        //ricalcolare il centroide
+        for(k = 0; k < nClusters; k++;)
+            updateCentroid(centroids[k], prototypes[k]);
+    }while((++i < maxIterations) && changed);
+    free(prototypes);
 }
 
 point_t *readDataset(int *nPoints, char *path) {
@@ -79,17 +132,17 @@ point_t *readDataset(int *nPoints, char *path) {
     return points;
 }
 
-double getSquaredDistance(point_t *point, centroid_t *centroid) {
-    unsigned int coordinate = 0;
-    double difference = 0.0;
-    double squaredDistance = 0.0;
+void updateCentroid(centroid_t *centroid, prototype_t *prototype){
+    int i;
+    for(i = 0; i < N_COORDINATES; i++)
+        centroid->coordinates[i] = prototype->pointsCoordinatesSum[i]/prototype->nPoints;
+}
 
-    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
-        difference = point->coordinates[coordinate] - centroid->coordinates[coordinate];
-        squaredDistance += difference * difference;
-    }
-
-    return squaredDistance;
+void updatePrototype(prototype_t *prototype, point_t *point){
+    int i;
+    prototype->nPoints++;
+    for(i = 0; i < N_COORDINATES; i++)
+        prototype->pointsCoordinatesSum[i] += point->coordinates[i];
 }
 
 int main() {
