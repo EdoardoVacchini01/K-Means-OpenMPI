@@ -146,6 +146,41 @@ point_t *readDataset(int *nPoints, char *path) {
     return points;
 }
 
+void printCentroid(centroid_t *centroid) {
+    unsigned int coordinate = 0;
+    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
+        printf("%lf ", centroid->coordinates[coordinate]);
+    }
+    printf("\n");
+}
+
+void printCentroids(centroid_t *centroids, unsigned int nClusters) {
+    unsigned int cluster = 0;
+    for (cluster = 0; cluster < nClusters; cluster++) {
+        printf("Centroid of cluster No. %d: ", cluster);
+        printCentroid(centroids + cluster);
+    }
+}
+
 int main() {
+    point_t *points = NULL;
+    unsigned int nPoints = 0;
+    centroid_t *centroids = NULL;
+    unsigned int nClusters = 3;
+
+    points = readDataset(&nPoints, "dataset.txt");
+
+    if (points == NULL) {
+        printf("An error occurred while reading the dataset file.\n");
+        return 1;
+    }
+
+    kMeansClustering(centroids, nClusters, points, nPoints, 100);
+
+    printCentroids(centroids, nClusters);
+
+    free(points);
+    free(centroids);
+
     return 0;
 }
