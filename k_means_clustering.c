@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define N_COORDINATES 2
@@ -55,12 +56,25 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
     return centroids;
 }
 
+void updateCentroid(centroid_t *centroid, prototype_t *prototype){
+    int i;
+    for(i = 0; i < N_COORDINATES; i++)
+        centroid->coordinates[i] = prototype->pointsCoordinatesSum[i]/prototype->nPoints;
+}
+
+void updatePrototype(prototype_t *prototype, point_t *point){
+    int i;
+    prototype->nPoints++;
+    for(i = 0; i < N_COORDINATES; i++)
+        prototype->pointsCoordinatesSum[i] += point->coordinates[i];
+}
+
 void kMeansClustering(centroid_t *centroids, unsigned int nClusters, point_t *dataset, unsigned int nPoints, unsigned int maxIterations){
     centroids = initCentroids(dataset, nPoints, nClusters);
 
     int i = 0, j, k, isChanged, oldCluster;
     double minimumDistance, distance;
-    prototype_t *protoypes = malloc(nClusters * sizeof(*centroids)); //STA NEL MAIN E POI LO SI PASSA COME PARAMETRO O QUI?
+    prototype_t *prototypes = malloc(nClusters * sizeof(*centroids)); //STA NEL MAIN E POI LO SI PASSA COME PARAMETRO O QUI?
 
     do{
         isChanged = 0;
@@ -68,8 +82,8 @@ void kMeansClustering(centroid_t *centroids, unsigned int nClusters, point_t *da
         //azzera le somme delle coordinate
         for(k = 0; k < nClusters; k++)
             for(j = 0; j < N_COORDINATES; j++){
-                protoypes[k].pointsCoordinatesSum[j] = 0;
-                protoypes[k].nPoints = 0;
+                prototypes[k].pointsCoordinatesSum[j] = 0;
+                prototypes[k].nPoints = 0;
             }
 
         //assegnare a tutti i punti il cluster basandosi sulla distanza
@@ -77,21 +91,21 @@ void kMeansClustering(centroid_t *centroids, unsigned int nClusters, point_t *da
             minimumDistance = __DBL_MAX__;
             oldCluster = dataset[j].clusterId;
             for(k = 0; k < nClusters; k++){
-                distance = getSquaredDistance(dataset[j], centroids[j]);
+                distance = getSquaredDistance(&dataset[j], &centroids[j]);
                 if(distance < minimumDistance){
                     minimumDistance = distance;
                     dataset[j].clusterId = k;
                 }
             }
-            updatePrototype(protoypes[dataset[j].clusterId], dataset[j]);
+            updatePrototype(&prototypes[dataset[j].clusterId], &dataset[j]);
             if(oldCluster != dataset[j].clusterId)
                 isChanged = 1;
         }
 
         //ricalcolare il centroide
-        for(k = 0; k < nClusters; k++;)
-            updateCentroid(centroids[k], prototypes[k]);
-    }while((++i < maxIterations) && changed);
+        for(k = 0; k < nClusters; k++)
+            updateCentroid(&centroids[k], &prototypes[k]);
+    }while((++i < maxIterations) && isChanged);
     free(prototypes);
 }
 
@@ -132,19 +146,6 @@ point_t *readDataset(int *nPoints, char *path) {
     return points;
 }
 
-void updateCentroid(centroid_t *centroid, prototype_t *prototype){
-    int i;
-    for(i = 0; i < N_COORDINATES; i++)
-        centroid->coordinates[i] = prototype->pointsCoordinatesSum[i]/prototype->nPoints;
-}
-
-void updatePrototype(prototype_t *prototype, point_t *point){
-    int i;
-    prototype->nPoints++;
-    for(i = 0; i < N_COORDINATES; i++)
-        prototype->pointsCoordinatesSum[i] += point->coordinates[i];
-}
-
 int main() {
-    
+    return 0;
 }
