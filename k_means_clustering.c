@@ -13,6 +13,11 @@ typedef struct {
     double coordinates[N_COORDINATES];
 } centroid_t;
 
+typedef struct {
+    double pointsCoordinatesSum[N_COORDINATES];
+    unsigned int nPoints;
+} prototype_t;
+
 centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nClusters) {
     centroid_t *centroids = NULL;
     unsigned int cluster = 0;
