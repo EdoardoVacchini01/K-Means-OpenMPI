@@ -19,6 +19,7 @@ typedef struct {
     unsigned int nPoints;
 } prototype_t;
 
+
 double getSquaredDistance(point_t *point, centroid_t *centroid) {
     unsigned int coordinate = 0;
     double difference = 0.0;
@@ -32,6 +33,7 @@ double getSquaredDistance(point_t *point, centroid_t *centroid) {
     return squaredDistance;
 }
 
+
 void printPoint(point_t *point) {
     unsigned int coordinate = 0;
 
@@ -39,6 +41,7 @@ void printPoint(point_t *point) {
         printf("%lf%s", point->coordinates[coordinate], (coordinate < DIMENSION - 1) ? " " : "\n");
     }
 }
+
 
 void printPoints(point_t *points, unsigned int nPoints) {
     unsigned int point = 0;
@@ -49,6 +52,7 @@ void printPoints(point_t *points, unsigned int nPoints) {
     }
 }
 
+
 void printCentroid(centroid_t *centroid) {
     unsigned int coordinate = 0;
 
@@ -58,6 +62,7 @@ void printCentroid(centroid_t *centroid) {
     }
 }
 
+
 void printCentroids(centroid_t *centroids, unsigned int nClusters) {
     unsigned int cluster = 0;
 
@@ -66,6 +71,7 @@ void printCentroids(centroid_t *centroids, unsigned int nClusters) {
         printCentroid(centroids + cluster);
     }
 }
+
 
 centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nClusters) {
     centroid_t *centroids = NULL;
@@ -109,6 +115,7 @@ void updatePrototype(prototype_t *prototype, point_t *point) {
 
     prototype->nPoints++;
 }
+
 
 centroid_t *kMeansClustering(point_t *points, unsigned int nPoints, unsigned int nClusters,
         unsigned int maxIterations) {
@@ -176,6 +183,7 @@ centroid_t *kMeansClustering(point_t *points, unsigned int nPoints, unsigned int
     return centroids;
 }
 
+
 unsigned int readDataset(char *path, point_t **points) {
     FILE *file = NULL;
     char buffer[BUFFER_LENGTH];
@@ -224,6 +232,7 @@ unsigned int readDataset(char *path, point_t **points) {
 
     return nPoints;
 }
+
 
 int main(int argc, char **argv) {
     point_t *points = NULL;
