@@ -2,20 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define N_COORDINATES 2
-#define BUFFER_LENGTH 1000
+#define DIMENSION 2
+#define BUFFER_LENGTH 4096
 
 typedef struct {
-    double coordinates[N_COORDINATES];
+    double coordinates[DIMENSION];
     unsigned int clusterId;
 } point_t;
 
 typedef struct {
-    double coordinates[N_COORDINATES];
+    double coordinates[DIMENSION];
 } centroid_t;
 
 typedef struct {
-    double pointsCoordinatesSum[N_COORDINATES];
+    double pointsCoordinatesSum[DIMENSION];
     unsigned int nPoints;
 } prototype_t;
 
@@ -24,7 +24,7 @@ double getSquaredDistance(point_t *point, centroid_t *centroid) {
     double difference = 0.0;
     double squaredDistance = 0.0;
 
-    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
+    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
         difference = point->coordinates[coordinate] - centroid->coordinates[coordinate];
         squaredDistance += difference * difference;
     }
@@ -34,32 +34,35 @@ double getSquaredDistance(point_t *point, centroid_t *centroid) {
 
 void printPoint(point_t *point) {
     unsigned int coordinate = 0;
-    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
-        printf("%lf ", point->coordinates[coordinate]);
+
+    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+        printf("%lf%s", point->coordinates[coordinate], (coordinate < DIMENSION - 1) ? " " : "\n");
     }
-    printf("\n");
 }
 
 void printPoints(point_t *points, unsigned int nPoints) {
-    unsigned int i = 0;
-    for (i = 0; i < nPoints; i++) {
-        printf("Point No. %d: ", i);
-        printPoint(points + i);
+    unsigned int point = 0;
+
+    for (point = 0; point < nPoints; point++) {
+        printf("Point #%d: ", point);
+        printPoint(points + point);
     }
 }
 
 void printCentroid(centroid_t *centroid) {
     unsigned int coordinate = 0;
-    for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
-        printf("%lf ", centroid->coordinates[coordinate]);
+
+    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+        printf("%lf%s", centroid->coordinates[coordinate],
+            (coordinate < DIMENSION - 1) ? " " : "\n");
     }
-    printf("\n");
 }
 
 void printCentroids(centroid_t *centroids, unsigned int nClusters) {
     unsigned int cluster = 0;
+
     for (cluster = 0; cluster < nClusters; cluster++) {
-        printf("Centroid of cluster No. %d: ", cluster);
+        printf("Centroid of cluster #%d: ", cluster);
         printCentroid(centroids + cluster);
     }
 }
@@ -79,7 +82,7 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
     }
 
     for (cluster = 0; cluster < nClusters; cluster++) {
-        for (coordinate = 0; coordinate < N_COORDINATES; coordinate++) {
+        for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
             (centroids + cluster)->coordinates[coordinate] =
                 (points + cluster)->coordinates[coordinate];
         }
@@ -88,119 +91,162 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
     return centroids;
 }
 
-void updateCentroid(centroid_t *centroid, prototype_t *prototype){
-    unsigned int i;
-    for(i = 0; i < N_COORDINATES; i++)
-        centroid->coordinates[i] = prototype->pointsCoordinatesSum[i]/prototype->nPoints;
+void updateCentroid(centroid_t *centroid, prototype_t *prototype) {
+    unsigned int coordinate = 0;
+
+    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+        centroid->coordinates[coordinate] =
+            prototype->pointsCoordinatesSum[coordinate] / prototype->nPoints;
+    }
 }
 
-void updatePrototype(prototype_t *prototype, point_t *point){
-    unsigned int i;
-    (prototype->nPoints)++;
-    for(i = 0; i < N_COORDINATES; i++)
-        prototype->pointsCoordinatesSum[i] += point->coordinates[i];
+void updatePrototype(prototype_t *prototype, point_t *point) {
+    unsigned int coordinate = 0;
+
+    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+        prototype->pointsCoordinatesSum[coordinate] += point->coordinates[coordinate];
+    }
+
+    prototype->nPoints++;
 }
 
-void kMeansClustering(centroid_t **centroids, unsigned int nClusters, point_t *dataset, unsigned int nPoints, unsigned int maxIterations){
-    *centroids = initCentroids(dataset, nPoints, nClusters);
-    if(*centroids == NULL)
-        printf("Failed to initialize centroids.\n");
-
-    unsigned int i = 0, j, k, isChanged, oldCluster;
-    double minimumDistance, distance;
+centroid_t *kMeansClustering(point_t *points, unsigned int nPoints, unsigned int nClusters,
+        unsigned int maxIterations) {
+    centroid_t *centroids = NULL;
     prototype_t *prototypes = NULL;
-    prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes)); //STA NEL MAIN E POI LO SI PASSA COME PARAMETRO O QUI?
+    unsigned int clustersChanged = 0;
+    unsigned int cluster = 0;
+    unsigned int coordinate = 0;
+    unsigned int iteration = 0;
+    unsigned int point = 0;
+    double minimumSquaredDistance;
+    unsigned int oldCluster = 0;
+    double squaredDistance;
 
-    do{
-        isChanged = 0;
+    centroids = initCentroids(points, nPoints, nClusters);
+    if (centroids == NULL) {
+        return NULL;
+    }
 
-        //azzera le somme delle coordinate
-        for(k = 0; k < nClusters; k++){
-            for(j = 0; j < N_COORDINATES; j++)
-                prototypes[k].pointsCoordinatesSum[j] = 0;
-            prototypes[k].nPoints = 0;
+    prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
+    if (prototypes == NULL) {
+        free(centroids);
+        return NULL;
+    }
+
+    do {
+        clustersChanged = 0;
+
+        // Initialize the prototypes
+        for (cluster = 0; cluster < nClusters; cluster++) {
+            for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+                (prototypes + cluster)->pointsCoordinatesSum[coordinate] = 0;
+            }
+            (prototypes + cluster)->nPoints = 0;
         }
 
-        //assegnare a tutti i punti il cluster basandosi sulla distanza
-        for(j = 0; j < nPoints; j++){
-            minimumDistance = __DBL_MAX__;
-            oldCluster = dataset[j].clusterId;
-            for(k = 0; k < nClusters; k++){
-                distance = getSquaredDistance(dataset + j, *centroids + k);
-                if(distance < minimumDistance){
-                    minimumDistance = distance;
-                    dataset[j].clusterId = k;
+        // Assign to each point its nearest centroid
+        for (point = 0; point < nPoints; point++) {
+            minimumSquaredDistance = __DBL_MAX__;
+            oldCluster = (points + point)->clusterId;
+
+            for (cluster = 0; cluster < nClusters; cluster++) {
+                squaredDistance = getSquaredDistance(points + point, centroids + cluster);
+                if (squaredDistance < minimumSquaredDistance) {
+                    minimumSquaredDistance = squaredDistance;
+                    (points + point)->clusterId = cluster;
                 }
             }
-            updatePrototype(prototypes + dataset[j].clusterId, dataset + j);
-            if(oldCluster != dataset[j].clusterId)
-                isChanged = 1;
+
+            if((points + point)->clusterId != oldCluster) {
+                clustersChanged = 1;
+            }
+
+            updatePrototype(prototypes + (points + point)->clusterId, points + point);
         }
 
-        //ricalcolare il centroide
-        for(k = 0; k < nClusters; k++)
-            updateCentroid(*centroids + k, prototypes + k);
-            
-    }while((++i < maxIterations) && isChanged);
+        // Update the position of the centroids
+        for (cluster = 0; cluster < nClusters; cluster++) {
+            updateCentroid(centroids + cluster, prototypes + cluster);
+        }
+
+    } while((++iteration < maxIterations) && clustersChanged);
+
     free(prototypes);
+    return centroids;
 }
 
-point_t *readDataset(unsigned int *nPoints, char *path) {
-    FILE *file = fopen(path, "r");
-    if (!file) {
-        return NULL;
-    }
-
-    // The first line of the file contains the number of points in the file
-    // the array of points is prepared accordingly so
-    point_t *points;
+unsigned int readDataset(char *path, point_t **points) {
+    FILE *file = NULL;
     char buffer[BUFFER_LENGTH];
-    fgets(buffer, sizeof(buffer), file);
-    sscanf(buffer, "%d", nPoints);
-    if (!( points = (point_t*) malloc((*nPoints) * sizeof(*points)) ))
-        return NULL;
+    unsigned int nPoints = 0;
+    unsigned int tokens = 0;
+    char *token = NULL;
+    char coordinatesDelimiter[] = " ";
+    unsigned int point = 0;
 
-    // For all the lines, it reads them, tokenize them one token by one
-    // token and if the number of token is different from the number of 
-    // dimensions stops the procedure and returns NULL
-    unsigned int converted, i;
-    char *delimiter = " ", *token = NULL;
-    for ( i = 0; fgets(buffer, sizeof(buffer), file); i++ ) {
-        converted = 0;
-        token = strtok( buffer, delimiter );
-        while( token != NULL ) {
-            points[i].coordinates[converted] = atof(token);
-            converted ++;
-            token = strtok( NULL, delimiter );
-        }   
-        if (converted != N_COORDINATES){
-            free(points);
-            return NULL;
-        }
+    file = fopen(path, "r");
+    if (file == NULL) {
+        return 0;
     }
 
-    return points;
+    // The first line of the file contains the number of points in the file (so the array of points
+    // is prepared accordingly)
+    fgets(buffer, sizeof(buffer), file);
+    sscanf(buffer, "%d", &nPoints);
+
+    *points = (point_t*) malloc(nPoints * sizeof(**points));
+    if (*points == NULL) {
+        fclose(file);
+        return 0;
+    }
+
+    // Every line is tokenized and if the number of tokens is different from the dimension of the
+    // space we stop the procedure and return 0
+    while (fgets(buffer, sizeof(buffer), file) && point < nPoints) {
+        tokens = 0;
+
+        token = strtok(buffer, coordinatesDelimiter);
+        while (token != NULL) {
+            (*points + point)->coordinates[tokens] = atof(token);
+            tokens++;
+            token = strtok(NULL, coordinatesDelimiter);
+        }
+
+        if (tokens != DIMENSION) {
+            fclose(file);
+            free(points);
+            return 0;
+        }
+
+        point++;
+    }
+
+    return nPoints;
 }
 
-int main() {
+int main(int argc, char **argv) {
     point_t *points = NULL;
     unsigned int nPoints = 0;
     centroid_t *centroids = NULL;
     unsigned int nClusters = 3;
 
-    points = readDataset(&nPoints, "dataset.txt");
-    
-    if (points == NULL) {
+    nPoints = readDataset("dataset.txt", &points);
+    if (nPoints == 0) {
         printf("An error occurred while reading the dataset file.\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    kMeansClustering(&centroids, nClusters, points, nPoints, 100);
+    centroids = kMeansClustering(points, nPoints, nClusters, 100);
+    if (centroids == NULL) {
+        free(points);
+        printf("An error occurred while clustering the data points.\n");
+        return EXIT_FAILURE;
+    }
 
     printCentroids(centroids, nClusters);
 
     free(points);
     free(centroids);
-
-    return 0;
+    return EXIT_SUCCESS;
 }
