@@ -215,7 +215,7 @@ unsigned int readDataset(char *path, point_t **points) {
         tokens = 0;
 
         token = strtok(buffer, coordinatesDelimiter);
-        while (token != NULL) {
+        while (token != NULL && tokens < DIMENSION) {
             (*points + point)->coordinates[tokens] = atof(token);
             tokens++;
             token = strtok(NULL, coordinatesDelimiter);
@@ -227,6 +227,7 @@ unsigned int readDataset(char *path, point_t **points) {
             return 0;
         }
 
+        (*points + point)->clusterId = 0;
         point++;
     }
 
