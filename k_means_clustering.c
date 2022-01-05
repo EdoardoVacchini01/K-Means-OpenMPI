@@ -235,18 +235,20 @@ unsigned int readDataset(char *path, point_t **points) {
 }
 
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     point_t *points = NULL;
     unsigned int nPoints = 0;
     centroid_t *centroids = NULL;
     unsigned int nClusters = 3;
 
-    nPoints = readDataset("dataset.txt", &points);
+    printf("Reading the dataset file...\n");
+    nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
     if (nPoints == 0) {
         printf("An error occurred while reading the dataset file.\n");
         return EXIT_FAILURE;
     }
 
+    printf("Clustering the data points...\n");
     centroids = kMeansClustering(points, nPoints, nClusters, 100);
     if (centroids == NULL) {
         free(points);
@@ -254,6 +256,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    printf("\nClustering process completed.\n");
     printCentroids(centroids, nClusters);
 
     free(points);
