@@ -53,3 +53,6 @@ dkms.conf
 
 # Dataset files
 dataset*.txt
+
+# Visual Studio Code configuration files
+.vscode/
