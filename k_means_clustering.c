@@ -98,12 +98,31 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
     return centroids;
 }
 
+void initPrototypes(prototype_t *prototypes, unsigned int nClusters){
+    unsigned int cluster = 0;
+    unsigned int coordinate = 0;
+
+    for (cluster = 0; cluster < nClusters; cluster++) {
+        for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+            (prototypes + cluster)->pointsCoordinatesSum[coordinate] = 0;
+        }
+        (prototypes + cluster)->nPoints = 0;
+    }
+}
+
 void updateCentroid(centroid_t *centroid, prototype_t *prototype) {
     unsigned int coordinate = 0;
 
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
         centroid->coordinates[coordinate] =
             prototype->pointsCoordinatesSum[coordinate] / prototype->nPoints;
+    }
+}
+
+void updateCentroids(centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters){
+    unsigned int cluster = 0;
+    for (cluster = 0; cluster < nClusters; cluster++) {
+        updateCentroid(centroids + cluster, prototypes + cluster);
     }
 }
 
@@ -117,75 +136,36 @@ void updatePrototype(prototype_t *prototype, point_t *point) {
     prototype->nPoints++;
 }
 
-
-centroid_t *kMeansClustering(point_t *points, unsigned int nPoints, unsigned int nClusters,
-        unsigned int maxIterations) {
-    centroid_t *centroids = NULL;
-    prototype_t *prototypes = NULL;
-    unsigned int clustersChanged = 0;
-    unsigned int cluster = 0;
-    unsigned int coordinate = 0;
-    unsigned int iteration = 0;
+unsigned int kMeansIteration(point_t *points, unsigned int nPoints, centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters){
     unsigned int point = 0;
-    double minimumSquaredDistance;
+    unsigned int cluster = 0;
     unsigned int oldCluster = 0;
-    double squaredDistance;
+    unsigned int clustersChanged = 0;
+    double minimumSquaredDistance = 0.0;
+    double squaredDistance = 0.0;
 
-    centroids = initCentroids(points, nPoints, nClusters);
-    if (centroids == NULL) {
-        return NULL;
-    }
+    for (point = 0; point < nPoints; point++) {
+        minimumSquaredDistance = __DBL_MAX__;
+        oldCluster = (points + point)->clusterId;
 
-    prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
-    if (prototypes == NULL) {
-        free(centroids);
-        return NULL;
-    }
-
-    do {
-        clustersChanged = 0;
-
-        // Initialize the prototypes
         for (cluster = 0; cluster < nClusters; cluster++) {
-            for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-                (prototypes + cluster)->pointsCoordinatesSum[coordinate] = 0;
+            squaredDistance = getSquaredDistance(points + point, centroids + cluster);
+            if (squaredDistance < minimumSquaredDistance) {
+                minimumSquaredDistance = squaredDistance;
+                (points + point)->clusterId = cluster;
             }
-            (prototypes + cluster)->nPoints = 0;
         }
 
-        // Assign to each point its nearest centroid
-        for (point = 0; point < nPoints; point++) {
-            minimumSquaredDistance = __DBL_MAX__;
-            oldCluster = (points + point)->clusterId;
-
-            for (cluster = 0; cluster < nClusters; cluster++) {
-                squaredDistance = getSquaredDistance(points + point, centroids + cluster);
-                if (squaredDistance < minimumSquaredDistance) {
-                    minimumSquaredDistance = squaredDistance;
-                    (points + point)->clusterId = cluster;
-                }
-            }
-
-            if((points + point)->clusterId != oldCluster) {
-                clustersChanged = 1;
-            }
-
-            updatePrototype(prototypes + (points + point)->clusterId, points + point);
+        if((points + point)->clusterId != oldCluster) {
+            clustersChanged = 1;
         }
 
-        // Update the position of the centroids
-        for (cluster = 0; cluster < nClusters; cluster++) {
-            updateCentroid(centroids + cluster, prototypes + cluster);
-        }
-
-    } while((++iteration < maxIterations) && clustersChanged);
-
-    free(prototypes);
-    return centroids;
+        updatePrototype(prototypes + (points + point)->clusterId, points + point);
+    }
+    return clustersChanged;
 }
 
-
-unsigned int readDataset(char *path, point_t **points) {
+unsigned int readDataset(const char *path, point_t **points) {
     FILE *file = NULL;
     char buffer[BUFFER_LENGTH];
     unsigned int nPoints = 0;
@@ -237,39 +217,54 @@ unsigned int readDataset(char *path, point_t **points) {
 
 
 int main(int argc, char *argv[]) {
-    int mpi_rank = 0;
-    int mpi_size = 0;
     point_t *points = NULL;
     unsigned int nPoints = 0;
     centroid_t *centroids = NULL;
-    unsigned int nClusters = 3;
+    unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
+    unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+    prototype_t *prototypes = NULL;
+    unsigned int clustersChanged = 0;
+    unsigned int iteration = 0;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    if (mpi_rank == 0) {
-        printf("Reading the dataset file...\n");
-        nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
-        if (nPoints == 0) {
-            printf("An error occurred while reading the dataset file.\n");
-            return EXIT_FAILURE;
-        }
+    printf("Reading the dataset file...\n");
+    nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
+    if (nPoints == 0) {
+        printf("An error occurred while reading the dataset file.\n");
+        return EXIT_FAILURE;
+    }
 
-        printf("Clustering the data points...\n");
-        centroids = kMeansClustering(points, nPoints, nClusters, (argc > 2) ? atoi(argv[2]) : 100);
-        if (centroids == NULL) {
-            free(points);
-            printf("An error occurred while clustering the data points.\n");
-            return EXIT_FAILURE;
-        }
+    printf("Clustering the data points...\n");
+    centroids = initCentroids(points, nPoints, nClusters);
+    if (centroids == NULL) {
+        free(points);
+        printf("An error occurred while clustering the data points.\n");
+        return EXIT_FAILURE;
+    }
 
-        printf("\nClustering process completed.\n");
-        printCentroids(centroids, nClusters);
-
+    prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
+    if (prototypes == NULL) {
         free(points);
         free(centroids);
+        printf("An error occurred while clustering the data points.\n");
+        return EXIT_FAILURE;
     }
+    do {
+        initPrototypes(prototypes, nClusters);
+        clustersChanged = kMeansIteration(points, nPoints, centroids, prototypes, nClusters);
+        updateCentroids(centroids, prototypes, nClusters);
+
+    } while((++iteration < maxIterations) && clustersChanged);
+
+    printf("\nClustering process completed.\n");
+    printCentroids(centroids, nClusters);
+
+    free(points);
+    free(centroids);
+    free(prototypes);
 
     MPI_Finalize();
 
