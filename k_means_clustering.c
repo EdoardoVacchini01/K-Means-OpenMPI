@@ -269,6 +269,7 @@ int main(int argc, char *argv[]) {
         MPI_Send(points, 1, pointDatatype, 1, 0, MPI_COMM_WORLD);
     } else if (rank == 1) {
         MPI_Status status;
+        points = (point_t*) malloc(sizeof(*points));
         MPI_Recv(points, 1, pointDatatype, 0, 0, MPI_COMM_WORLD, &status);
         printPoint(points);
     }
