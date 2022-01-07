@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -236,30 +237,41 @@ unsigned int readDataset(char *path, point_t **points) {
 
 
 int main(int argc, char *argv[]) {
+    int mpi_rank = 0;
+    int mpi_size = 0;
     point_t *points = NULL;
     unsigned int nPoints = 0;
     centroid_t *centroids = NULL;
     unsigned int nClusters = 3;
 
-    printf("Reading the dataset file...\n");
-    nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
-    if (nPoints == 0) {
-        printf("An error occurred while reading the dataset file.\n");
-        return EXIT_FAILURE;
-    }
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    printf("Clustering the data points...\n");
-    centroids = kMeansClustering(points, nPoints, nClusters, (argc > 2) ? atoi(argv[2]) : 100);
-    if (centroids == NULL) {
+    if (mpi_rank == 0) {
+        printf("Reading the dataset file...\n");
+        nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
+        if (nPoints == 0) {
+            printf("An error occurred while reading the dataset file.\n");
+            return EXIT_FAILURE;
+        }
+
+        printf("Clustering the data points...\n");
+        centroids = kMeansClustering(points, nPoints, nClusters, (argc > 2) ? atoi(argv[2]) : 100);
+        if (centroids == NULL) {
+            free(points);
+            printf("An error occurred while clustering the data points.\n");
+            return EXIT_FAILURE;
+        }
+
+        printf("\nClustering process completed.\n");
+        printCentroids(centroids, nClusters);
+
         free(points);
-        printf("An error occurred while clustering the data points.\n");
-        return EXIT_FAILURE;
+        free(centroids);
     }
 
-    printf("\nClustering process completed.\n");
-    printCentroids(centroids, nClusters);
+    MPI_Finalize();
 
-    free(points);
-    free(centroids);
     return EXIT_SUCCESS;
 }
