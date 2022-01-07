@@ -275,9 +275,9 @@ int main(int argc, char *argv[]) {
     scatteredPoints = (point_t*) malloc(nPoints / communicatorSize * sizeof(*points));
 
     // Scatter the data points to the processes
-    MPI_Scatter(points, nPoints / communicatorSize, pointDatatype, scatteredPoints, 0, MPI_COMM_WORLD);
+    MPI_Scatter(points, nPoints / communicatorSize, pointDatatype, scatteredPoints, pointDatatype, 0, MPI_COMM_WORLD);
 
-    print("Process %d handles %d data points.\n", communicatorSize, nPoints);
+    printf("Process %d handles %d data points.\n", communicatorSize, nPoints);
     printPoints(scatteredPoints, nPoints);
 
 /*
