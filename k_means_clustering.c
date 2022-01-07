@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Clustering the data points...\n");
-    centroids = kMeansClustering(points, nPoints, nClusters, (argc > 2) ? argv[2] : 100);
+    centroids = kMeansClustering(points, nPoints, nClusters, (argc > 2) ? atoi(argv[2]) : 100);
     if (centroids == NULL) {
         free(points);
         printf("An error occurred while clustering the data points.\n");
