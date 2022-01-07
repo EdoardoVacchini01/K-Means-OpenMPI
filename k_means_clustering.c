@@ -279,9 +279,6 @@ int main(int argc, char *argv[]) {
     // Scatter the data points to the processes
     MPI_Scatter(points, nScatteredPoints, pointDatatype, scatteredPoints, nScatteredPoints, pointDatatype, 0, MPI_COMM_WORLD);
 
-    printf("Process %d handles %d data points.\n", communicatorSize, nScatteredPoints);
-    printPoints(scatteredPoints, nScatteredPoints);
-
 /*
     printf("Clustering the data points...\n");
     centroids = initCentroids(points, nPoints, nClusters);
