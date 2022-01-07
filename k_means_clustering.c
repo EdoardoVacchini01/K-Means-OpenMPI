@@ -259,13 +259,21 @@ int main(int argc, char *argv[]) {
 
     initDatatypes(&pointDatatype, &centroidDatatype, &prototypeDatatype);
 
-    printf("Reading the dataset file...\n");
-    nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
-    if (nPoints == 0) {
-        printf("An error occurred while reading the dataset file.\n");
-        return EXIT_FAILURE;
+    if (rank == 0) {
+        printf("Reading the dataset file...\n");
+        nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
+        if (nPoints == 0) {
+            printf("An error occurred while reading the dataset file.\n");
+            return EXIT_FAILURE;
+        }
+        MPI_Send(points, 1, pointDatatype, 1, 0, MPI_COMM_WORLD);
+    } else if (rank == 1) {
+        MPI_Status status;
+        MPI_Recv(points, 1, pointDatatype, 0, 0, MPI_COMM_WORLD, &status);
+        printPoint(points);
     }
 
+/*
     printf("Clustering the data points...\n");
     centroids = initCentroids(points, nPoints, nClusters);
     if (centroids == NULL) {
@@ -294,7 +302,7 @@ int main(int argc, char *argv[]) {
     free(points);
     free(centroids);
     free(prototypes);
-
+*/
     MPI_Finalize();
 
     return EXIT_SUCCESS;
