@@ -244,6 +244,7 @@ int main(int argc, char *argv[]) {
     point_t *points = NULL;
     point_t *scatteredPoints = NULL;
     unsigned int nPoints = 0;
+    unsigned int nScatteredPoints = 0;
     centroid_t *centroids = NULL;
     unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
     unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
@@ -267,15 +268,16 @@ int main(int argc, char *argv[]) {
             printf("An error occurred while reading the dataset file.\n");
             return EXIT_FAILURE;
         }
+        nScatteredPoints = nPoints / communicatorSize;
     }
 
-    // Broadcast nPoints to all processes
-    MPI_Bcast(&nPoints, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    // Broadcast nScatteredPoints to all processes
+    MPI_Bcast(&nScatteredPoints, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
-    scatteredPoints = (point_t*) malloc(nPoints / communicatorSize * sizeof(*points));
+    scatteredPoints = (point_t*) malloc(nScatteredPoints * sizeof(*points));
 
     // Scatter the data points to the processes
-    MPI_Scatter(points, nPoints / communicatorSize, pointDatatype, scatteredPoints, pointDatatype, 0, MPI_COMM_WORLD);
+    MPI_Scatter(points, nScatteredPoints, pointDatatype, scatteredPoints, nScatteredPoints, pointDatatype, 0, MPI_COMM_WORLD);
 
     printf("Process %d handles %d data points.\n", communicatorSize, nPoints);
     printPoints(scatteredPoints, nPoints);
