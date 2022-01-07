@@ -216,7 +216,21 @@ unsigned int readDataset(const char *path, point_t **points) {
 }
 
 
+void initDatatypes(MPI_Datatype *pointDatatype, MPI_Datatype *centroidDatatype, MPI_Datatype *prototypeDatatype) {
+    point_t point = NULL;
+
+    int blockLengths[] = {DIMENSION, 1};
+    MPI_Aint indices[] = {0, &point.clusterId - &point};
+    MPI_Datatype types[] = {MPI_DOUBLE, MPI_UNSIGNED};
+
+    MPI_Type_struct(2, blockLengths, indices, types, pointDatatype);
+    MPI_Type_commit(pointDatatype);
+}
+
+
 int main(int argc, char *argv[]) {
+    int rank = 0;
+    int communicatorSize = 0;
     point_t *points = NULL;
     unsigned int nPoints = 0;
     centroid_t *centroids = NULL;
@@ -225,10 +239,15 @@ int main(int argc, char *argv[]) {
     prototype_t *prototypes = NULL;
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
+    MPI_Datatype pointDatatype = NULL;
+    MPI_Datatype centroidDatatype = NULL;
+    MPI_Datatype prototypeDatatype = NULL;
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &communicatorSize);
+
+    initDatatypes(&pointDatatype, &centroidDatatype, &prototypeDatatype);
 
     printf("Reading the dataset file...\n");
     nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
