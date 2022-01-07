@@ -217,13 +217,13 @@ unsigned int readDataset(const char *path, point_t **points) {
 
 
 void initDatatypes(MPI_Datatype *pointDatatype, MPI_Datatype *centroidDatatype, MPI_Datatype *prototypeDatatype) {
-    point_t point = NULL;
+    point_t point = {0};
 
     int blockLengths[] = {DIMENSION, 1};
-    MPI_Aint indices[] = {0, &point.clusterId - &point};
+    MPI_Aint indices[] = {0, (void*)&point.clusterId - (void*)&point};
     MPI_Datatype types[] = {MPI_DOUBLE, MPI_UNSIGNED};
 
-    MPI_Type_struct(2, blockLengths, indices, types, pointDatatype);
+    MPI_Type_create_struct(2, blockLengths, indices, types, pointDatatype);
     MPI_Type_commit(pointDatatype);
 }
 
