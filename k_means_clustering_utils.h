@@ -38,7 +38,7 @@ void updateCentroids(centroid_t *centroids, prototype_t *prototypes, unsigned in
 void updatePrototype(prototype_t *prototype, point_t *point);
 
 unsigned int kMeansIteration(point_t *points, unsigned int nPoints, centroid_t *centroids,
-        prototype_t *prototypes, unsigned int nClusters);
+    prototype_t *prototypes, unsigned int nClusters);
 
 unsigned int readDataset(const char *path, point_t **points);
 
