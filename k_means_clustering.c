@@ -73,19 +73,9 @@ void printCentroids(centroid_t *centroids, unsigned int nClusters) {
 }
 
 
-centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nClusters) {
-    centroid_t *centroids = NULL;
+void initCentroids(centroid_t *centroids, unsigned int nClusters, point_t *points) {
     unsigned int cluster = 0;
     unsigned int coordinate = 0;
-
-    if (nClusters > nPoints) {
-        return NULL;
-    }
-
-    centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids));
-    if (centroids == NULL) {
-        return NULL;
-    }
 
     for (cluster = 0; cluster < nClusters; cluster++) {
         for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
@@ -93,21 +83,21 @@ centroid_t *initCentroids(point_t *points, unsigned int nPoints, unsigned int nC
                 (points + cluster)->coordinates[coordinate];
         }
     }
-
-    return centroids;
 }
 
-void initPrototypes(prototype_t *prototypes, unsigned int nClusters){
+
+void initPrototypes(prototype_t *prototypes, unsigned int nClusters) {
     unsigned int cluster = 0;
     unsigned int coordinate = 0;
 
     for (cluster = 0; cluster < nClusters; cluster++) {
         for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-            (prototypes + cluster)->pointsCoordinatesSum[coordinate] = 0;
+            (prototypes + cluster)->pointsCoordinatesSum[coordinate] = 0.0;
         }
         (prototypes + cluster)->nPoints = 0;
     }
 }
+
 
 void updateCentroid(centroid_t *centroid, prototype_t *prototype) {
     unsigned int coordinate = 0;
@@ -118,12 +108,15 @@ void updateCentroid(centroid_t *centroid, prototype_t *prototype) {
     }
 }
 
-void updateCentroids(centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters){
+
+void updateCentroids(centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters) {
     unsigned int cluster = 0;
+
     for (cluster = 0; cluster < nClusters; cluster++) {
         updateCentroid(centroids + cluster, prototypes + cluster);
     }
 }
+
 
 void updatePrototype(prototype_t *prototype, point_t *point) {
     unsigned int coordinate = 0;
@@ -135,13 +128,14 @@ void updatePrototype(prototype_t *prototype, point_t *point) {
     prototype->nPoints++;
 }
 
-unsigned int kMeansIteration(point_t *points, unsigned int nPoints, centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters){
+
+unsigned int kMeansIteration(point_t *points, unsigned int nPoints, centroid_t *centroids, prototype_t *prototypes, unsigned int nClusters) {
     unsigned int point = 0;
-    unsigned int cluster = 0;
-    unsigned int oldCluster = 0;
-    unsigned int clustersChanged = 0;
     double minimumSquaredDistance = 0.0;
+    unsigned int oldCluster = 0;
+    unsigned int cluster = 0;
     double squaredDistance = 0.0;
+    unsigned int clustersChanged = 0;
 
     for (point = 0; point < nPoints; point++) {
         minimumSquaredDistance = __DBL_MAX__;
@@ -155,31 +149,31 @@ unsigned int kMeansIteration(point_t *points, unsigned int nPoints, centroid_t *
             }
         }
 
-        if((points + point)->clusterId != oldCluster) {
+        if ((points + point)->clusterId != oldCluster) {
             clustersChanged = 1;
         }
 
         updatePrototype(prototypes + (points + point)->clusterId, points + point);
     }
+
     return clustersChanged;
 }
+
 
 unsigned int readDataset(const char *path, point_t **points) {
     FILE *file = NULL;
     char buffer[BUFFER_LENGTH];
     unsigned int nPoints = 0;
+    unsigned int point = 0;
     unsigned int tokens = 0;
     char *token = NULL;
     char coordinatesDelimiter[] = " ";
-    unsigned int point = 0;
 
     file = fopen(path, "r");
     if (file == NULL) {
         return 0;
     }
 
-    // The first line of the file contains the number of points in the file (so the array of points
-    // is prepared accordingly)
     fgets(buffer, sizeof(buffer), file);
     sscanf(buffer, "%d", &nPoints);
 
@@ -189,8 +183,6 @@ unsigned int readDataset(const char *path, point_t **points) {
         return 0;
     }
 
-    // Every line is tokenized and if the number of tokens is different from the dimension of the
-    // space we stop the procedure and return 0
     while (fgets(buffer, sizeof(buffer), file) && point < nPoints) {
         tokens = 0;
 
@@ -218,25 +210,33 @@ unsigned int readDataset(const char *path, point_t **points) {
 int main(int argc, char *argv[]) {
     point_t *points = NULL;
     unsigned int nPoints = 0;
-    centroid_t *centroids = NULL;
     unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
-    unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+    centroid_t *centroids = NULL;
     prototype_t *prototypes = NULL;
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
-    
+    unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+
     printf("Reading the dataset file...\n");
+
     nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
     if (nPoints == 0) {
         printf("An error occurred while reading the dataset file.\n");
         return EXIT_FAILURE;
     }
 
+    if (nClusters > nPoints) {
+        free(points);
+        printf("The number of clusters must be less than or equal to the number of data points.\n");
+        return EXIT_FAILURE;
+    }
+
     printf("Clustering the data points...\n");
-    centroids = initCentroids(points, nPoints, nClusters);
+
+    centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids));
     if (centroids == NULL) {
         free(points);
-        printf("An error occurred while clustering the data points.\n");
+        printf("An error occurred while allocating the memory for the centroids.\n");
         return EXIT_FAILURE;
     }
 
@@ -244,17 +244,21 @@ int main(int argc, char *argv[]) {
     if (prototypes == NULL) {
         free(points);
         free(centroids);
-        printf("An error occurred while clustering the data points.\n");
+        printf("An error occurred while allocating the memory for the prototypes.\n");
         return EXIT_FAILURE;
     }
+
+    initCentroids(centroids, nClusters, points);
     do {
         initPrototypes(prototypes, nClusters);
         clustersChanged = kMeansIteration(points, nPoints, centroids, prototypes, nClusters);
         updateCentroids(centroids, prototypes, nClusters);
 
-    } while((++iteration < maxIterations) && clustersChanged);
+        iteration++;
+    } while((iteration < maxIterations) && clustersChanged);
 
-    printf("\nClustering process completed.\n");
+    printf("Clustering process completed.\n\n");
+
     printCentroids(centroids, nClusters);
 
     free(points);
