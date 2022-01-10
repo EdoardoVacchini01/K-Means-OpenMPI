@@ -30,22 +30,43 @@ void initDatatypes(MPI_Datatype *pointDatatype, MPI_Datatype *centroidDatatype,
 }
 
 
+void reducePrototypes( prototype_t *in, prototype_t *inout, int *len, MPI_Datatype *dptr ) {
+    unsigned int cluster = 0;
+    unsigned int coordinate = 0;
+
+    for (cluster = 0; cluster < *len; cluster++) {
+        for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
+            (inout + cluster)->pointsCoordinatesSum[coordinate] += (in + cluster)->pointsCoordinatesSum[coordinate];
+        }
+        (inout + cluster)->nPoints += (in + cluster)->nPoints;
+    }
+}
+
+
 int main(int argc, char *argv[]) {
     int rank = 0;
     int communicatorSize = 0;
     MPI_Datatype pointDatatype = NULL;
     MPI_Datatype centroidDatatype = NULL;
     MPI_Datatype prototypeDatatype = NULL;
+    MPI_Op reducePrototypesOp = NULL;
     point_t *points = NULL;
     unsigned int nPoints = 0;
     unsigned int nScatteredPoints = 0;
     point_t *scatteredPoints = NULL;
+    centroid_t *centroids = NULL;
+    unsigned int clustersChanged = 0;
+    unsigned int iteration = 0;
+    unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
+    unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+    
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &communicatorSize);
 
     initDatatypes(&pointDatatype, &centroidDatatype, &prototypeDatatype);
+    MPI_Op_create(reducePrototypes, True, &reducePrototypesOp);
 
     if (rank == 0) {
         printf("Reading the dataset file...\n");
@@ -64,10 +85,64 @@ int main(int argc, char *argv[]) {
 
     // Allocate the memory for the point scatter test
     scatteredPoints = (point_t*) malloc(nScatteredPoints * sizeof(*points));
+    if (scatteredPoints == NULL) {
+        printf("An error occurred while allocating memory for the centroids.\n");
+        //TODO: handling failure on single process
+        MPI_Finalize();
+    }
 
     // Scatter the data points to the processes
     MPI_Scatter(points, nScatteredPoints, pointDatatype, scatteredPoints, nScatteredPoints,
         pointDatatype, 0, MPI_COMM_WORLD);
+
+    centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids)); 
+    if (centroids == NULL) {
+        //TODO: handling failure on single process
+        printf("An error occurred while allocating memory for the centroids.\n");
+        if (rank == 0) {
+            free(points);
+        }
+        free(scatteredPoints);
+        MPI_Finalize();
+        return EXIT_FAILURE;
+    }
+
+    if (rank == 0) {
+        initCentroids();
+    }
+    
+    MPI_Bcast(&centroids, nClusters, centroidDatatype, 0, MPI_COMM_WORLD);
+    prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
+    if (prototypes == NULL) {
+        //TODO: handling failure on single process
+        if (rank == 0)
+            free(points);
+        free(centroids);
+        free(scatteredPoints);
+        printf("An error occurred while allocating the memory for the prototypes.\n");
+        MPI_Finalize();
+        return EXIT_FAILURE;
+    }
+
+    do {
+        initPrototypes(prototypes, nClusters);
+        clustersChanged = kMeansIteration(scatteredPoints, nScatteredPoints, centroids, prototypes, nClusters);
+        //Si può fare con lo stesso buffer la Allreduce?
+        MPI_Allreduce(prototypes, prototypes, nClusters, prototypeDatatype, reducePrototypesOp, MPI_COMM_WORLD);
+        updateCentroids(centroids, prototypes, nClusters);
+        MPI_Allreduce(clustersChanged, clustersChanged, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+        iteration++;
+    } while((iteration < maxIterations) && clustersChanged);
+
+    //TODO: gather all clustered points and print them
+    if (rank == 0) {
+        printCentroids(centroids, nClusters);
+        free(points);
+    }
+
+    free(scatteredPoints);
+    free(centroids);
+    free(prototypes);
 
     MPI_Finalize();
 
