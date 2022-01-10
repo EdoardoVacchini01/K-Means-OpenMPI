@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
         //TODO: handling failure on single process
         MPI_Finalize();
     }
-
+    //TODO: distribuire tutti i punti scartati dalla divisione
     // Scatter the data points to the processes
     MPI_Scatter(points, nScatteredPoints, pointDatatype, scatteredPoints, nScatteredPoints,
         pointDatatype, 0, MPI_COMM_WORLD);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
         initCentroids(centroids, nClusters, points);
     }
     
-    MPI_Bcast(&centroids, nClusters, centroidDatatype, 0, MPI_COMM_WORLD);
+    MPI_Bcast(centroids, nClusters, centroidDatatype, 0, MPI_COMM_WORLD);
     prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
     if (prototypes == NULL) {
         //TODO: handling failure on single process
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return EXIT_FAILURE;
     }
-    
+
     if (rank == 0){
         printf("Clustering the data points...\n");
     }
