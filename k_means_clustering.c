@@ -126,14 +126,17 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return EXIT_FAILURE;
     }
-
+    
+    if (rank == 0){
+        printf("Clustering the data points...\n");
+    }
     do {
         initPrototypes(prototypes, nClusters);
         clustersChanged = kMeansIteration(scatteredPoints, nScatteredPoints, centroids, prototypes, nClusters);
         //Si può fare con lo stesso buffer la Allreduce?
-        MPI_Allreduce(prototypes, prototypes, nClusters, prototypeDatatype, reducePrototypesOp, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, prototypes, nClusters, prototypeDatatype, reducePrototypesOp, MPI_COMM_WORLD);
         updateCentroids(centroids, prototypes, nClusters);
-        MPI_Allreduce(&clustersChanged, &clustersChanged, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, &clustersChanged, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
         iteration++;
     } while((iteration < maxIterations) && clustersChanged);
 
