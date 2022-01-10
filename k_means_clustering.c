@@ -30,15 +30,17 @@ void initDatatypes(MPI_Datatype *pointDatatype, MPI_Datatype *centroidDatatype,
 }
 
 
-void reducePrototypes( prototype_t *in, prototype_t *inout, int *len, MPI_Datatype *dptr ) {
+void reducePrototypes(void *in, void *inout, int *len, MPI_Datatype *dptr) {
     unsigned int cluster = 0;
     unsigned int coordinate = 0;
+    prototype_t *inPrototype = (prototype_t*) in;
+    prototype_t *inoutPrototype = (prototype_t*) inout;
 
     for (cluster = 0; cluster < *len; cluster++) {
         for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-            (inout + cluster)->pointsCoordinatesSum[coordinate] += (in + cluster)->pointsCoordinatesSum[coordinate];
+            (inoutPrototype + cluster)->pointsCoordinatesSum[coordinate] += (inPrototype + cluster)->pointsCoordinatesSum[coordinate];
         }
-        (inout + cluster)->nPoints += (in + cluster)->nPoints;
+        (inoutPrototype + cluster)->nPoints += (inPrototype + cluster)->nPoints;
     }
 }
 
@@ -55,6 +57,7 @@ int main(int argc, char *argv[]) {
     unsigned int nScatteredPoints = 0;
     point_t *scatteredPoints = NULL;
     centroid_t *centroids = NULL;
+    prototype_t *prototypes = NULL;
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
     unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &communicatorSize);
 
     initDatatypes(&pointDatatype, &centroidDatatype, &prototypeDatatype);
-    MPI_Op_create(reducePrototypes, True, &reducePrototypesOp);
+    MPI_Op_create(reducePrototypes, 1, &reducePrototypesOp);
 
     if (rank == 0) {
         printf("Reading the dataset file...\n");
@@ -108,7 +111,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (rank == 0) {
-        initCentroids();
+        initCentroids(centroids, nClusters, points);
     }
     
     MPI_Bcast(&centroids, nClusters, centroidDatatype, 0, MPI_COMM_WORLD);
@@ -130,7 +133,7 @@ int main(int argc, char *argv[]) {
         //Si può fare con lo stesso buffer la Allreduce?
         MPI_Allreduce(prototypes, prototypes, nClusters, prototypeDatatype, reducePrototypesOp, MPI_COMM_WORLD);
         updateCentroids(centroids, prototypes, nClusters);
-        MPI_Allreduce(clustersChanged, clustersChanged, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+        MPI_Allreduce(&clustersChanged, &clustersChanged, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
         iteration++;
     } while((iteration < maxIterations) && clustersChanged);
 
