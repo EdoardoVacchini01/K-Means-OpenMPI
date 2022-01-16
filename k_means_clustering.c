@@ -23,7 +23,9 @@ int main(int argc, char *argv[]) {
     unsigned int iteration = 0;
     unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
     unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
-
+    int *pointsSendCounts = NULL;
+    int *pointsDisplacements = NULL;
+    unsigned int process = 0;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -42,10 +44,35 @@ int main(int argc, char *argv[]) {
         }
 
         nScatteredPoints = nPoints / communicatorSize;
+
+        pointsSendCounts = (int*) malloc(communicatorSize * sizeof(*pointsSendCounts));
+        if (pointsSendCounts == NULL) {
+            printf("An error occurred while allocating memory for the points send counts.\n");
+            //TODO: handling failure on single process
+            MPI_Finalize();
+        }
+
+        pointsDisplacements = (int*) malloc(communicatorSize * sizeof(*pointsDisplacements));
+        if (pointsDisplacements == NULL) {
+            printf("An error occurred while allocating memory for the points displacements.\n");
+            //TODO: handling failure on single process
+            MPI_Finalize();
+        }
+
+        for (process = 0; process < communicatorSize; process++) {
+            *(pointsSendCounts + process) = (process == 0) ?
+                (nScatteredPoints + (nPoints % communicatorSize)) : nScatteredPoints;
+            *(pointsDisplacements + process) = (process == 0) ?
+                0 : (*(pointsDisplacements + process - 1) + *(pointsSendCounts + process - 1));
+        }
     }
 
     // Broadcast nScatteredPoints to all processes
     MPI_Bcast(&nScatteredPoints, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        nScatteredPoints = *pointsSendCounts;
+    }
 
     // Allocate the memory for the point scatter test
     scatteredPoints = (point_t*) malloc(nScatteredPoints * sizeof(*points));
@@ -54,10 +81,10 @@ int main(int argc, char *argv[]) {
         //TODO: handling failure on single process
         MPI_Finalize();
     }
-    //TODO: distribuire tutti i punti scartati dalla divisione
+
     // Scatter the data points to the processes
-    MPI_Scatter(points, nScatteredPoints, pointDatatype, scatteredPoints, nScatteredPoints,
-        pointDatatype, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(points, pointsSendCounts, pointsDisplacements, pointDatatype, scatteredPoints,
+        nScatteredPoints, pointDatatype, 0, MPI_COMM_WORLD);
 
     centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids)); 
     if (centroids == NULL) {
@@ -74,7 +101,7 @@ int main(int argc, char *argv[]) {
     if (rank == 0) {
         initCentroids(centroids, nClusters, points);
     }
-    
+
     MPI_Bcast(centroids, nClusters, centroidDatatype, 0, MPI_COMM_WORLD);
     prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
     if (prototypes == NULL) {
