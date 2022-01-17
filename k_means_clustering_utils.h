@@ -1,6 +1,8 @@
 #ifndef K_MEANS_CLUSTERING_UTILS_H
 #define K_MEANS_CLUSTERING_UTILS_H
 
+#include <stdio.h>
+
 #define DIMENSION 2
 
 typedef struct {
@@ -21,9 +23,9 @@ void printPoint(point_t *point);
 
 void printPoints(point_t *points, unsigned int nPoints);
 
-void printCentroid(centroid_t *centroid);
+void printCentroid(centroid_t *centroid, FILE *outputFile);
 
-void printCentroids(centroid_t *centroids, unsigned int nClusters);
+void printCentroids(centroid_t *centroids, unsigned int nClusters, FILE *outputFile);
 
 double getSquaredDistance(point_t *point, centroid_t *centroid);
 

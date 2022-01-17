@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,22 +25,21 @@ void printPoints(point_t *points, unsigned int nPoints) {
 }
 
 
-void printCentroid(centroid_t *centroid) {
+void printCentroid(centroid_t *centroid, FILE *outputFile) {
     unsigned int coordinate = 0;
 
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-        printf("%lf%s", centroid->coordinates[coordinate],
+        fprintf(outputFile, "%lf%s", centroid->coordinates[coordinate],
             (coordinate < DIMENSION - 1) ? " " : "\n");
     }
 }
 
 
-void printCentroids(centroid_t *centroids, unsigned int nClusters) {
+void printCentroids(centroid_t *centroids, unsigned int nClusters, FILE *outputFile) {
     unsigned int cluster = 0;
 
     for (cluster = 0; cluster < nClusters; cluster++) {
-        printf("Centroid of cluster #%d: ", cluster);
-        printCentroid(centroids + cluster);
+        printCentroid(centroids + cluster, outputFile);
     }
 }
 

@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
     unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+    FILE *outputFile = NULL;
 
     printf("Reading the dataset file...\n");
 
@@ -55,8 +56,13 @@ int main(int argc, char *argv[]) {
     } while((iteration < maxIterations) && clustersChanged);
 
     printf("Clustering process completed.\n\n");
+    printCentroids(centroids, nClusters, stdout);
 
-    printCentroids(centroids, nClusters);
+    outputFile = fopen((argc > 4) ? argv[4] : "out.txt", "w");
+    if (outputFile != NULL){
+        printCentroids(centroids, nClusters, outputFile);
+        fclose(outputFile);
+    }
 
     free(points);
     free(centroids);
