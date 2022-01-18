@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     printCentroids(centroids, nClusters, stdout);
 
     outputFile = fopen((argc > 4) ? argv[4] : "out.txt", "w");
-    if (outputFile != NULL){
+    if (outputFile != NULL) {
         printCentroids(centroids, nClusters, outputFile);
         fclose(outputFile);
     }

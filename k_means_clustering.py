@@ -1,14 +1,16 @@
-from sklearn.cluster import KMeans
+#!/usr/bin/env python3
+
 import pandas as pd
+from sklearn.cluster import KMeans
 import sys
 
-
 if __name__ == '__main__':
-    fileName = sys.argv[1]
-    df = pd.read_csv(fileName, sep=' ', header=None, skiprows=[0])
-    p = KMeans(n_clusters=int(sys.argv[2]), max_iter=100, init=df.iloc[0:int(sys.argv[2])], tol=0.0, algorithm='full')
-    cluster = p.fit(df);
+    points = pd.read_csv(sys.argv[1], sep=' ', header=None, skiprows=[0])
 
-    with open(sys.argv[3], 'w') as outfile:
-        for x in p.cluster_centers_ :
-            print(" ".join([f"{y:.6}" for y in x]), file=outfile)
+    k_means = KMeans(n_clusters=int(sys.argv[2]), max_iter=100,
+        init=points.iloc[0:int(sys.argv[2])], tol=0.0, algorithm='full')
+    fitted_k_means = k_means.fit(points);
+
+    with open(sys.argv[3], 'w') as outputFile:
+        for centroid in fitted_k_means.cluster_centers_:
+            print(' '.join([f'{coordinate:.6}' for coordinate in centroid]), file=outputFile)
