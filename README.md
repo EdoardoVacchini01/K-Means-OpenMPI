@@ -23,12 +23,7 @@ Please note that if you intend to run the application with your own dataset, it 
 - Each line of the file represents a different sample and is written such that each coordinate is separated by a single space.
 
 ### 3 - Compile and run the program
-To compile and run the serial code:
-```
->> gcc -Wall *.c -o executableFile
->> ./executableFile nClusters maxIterations dataset outputFile
-```
-If instead you want to compile and run the parallel application, first make sure to switch the branch to the ```parallel``` branch, and then compile and run the MPI application with:
+To compile and run the parallel application, first make sure to switch the branch to the ```parallel``` branch, and then compile and run the MPI application with:
 
 ```
 >> mpicc -Wall *.c -o executableFile
