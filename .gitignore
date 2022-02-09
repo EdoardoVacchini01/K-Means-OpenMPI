@@ -15,4 +15,4 @@ profiling*.txt
 .vscode/
 
 # Virtual environment files
-.virtual-environment/
+.virtual_environment/
