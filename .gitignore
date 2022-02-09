@@ -56,3 +56,6 @@ dataset*.txt
 
 # Visual Studio Code configuration files
 .vscode/
+
+# Virtual environment files
+.virtual-environment/
