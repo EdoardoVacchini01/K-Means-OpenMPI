@@ -3,6 +3,9 @@
 
 #include "k_means_clustering_utils.h"
 
+/**
+ * @brief Length of the buffer that is used to read each line of the dataset file.
+ */
 #define BUFFER_LENGTH 4096
 
 
@@ -153,7 +156,7 @@ unsigned int readDataset(const char *path, point_t **points) {
     unsigned int point = 0;
     unsigned int tokens = 0;
     char *token = NULL;
-    char coordinatesDelimiter[] = " ";
+    const char coordinatesDelimiter[] = " ";
 
     file = fopen(path, "r");
     if (file == NULL) {
@@ -189,5 +192,6 @@ unsigned int readDataset(const char *path, point_t **points) {
         point++;
     }
 
+    fclose(file);
     return nPoints;
 }
