@@ -6,7 +6,7 @@ import random
 
 def generate_dataset(points, dimension, output_filename, random_seed=None):
     """
-    Generates a dataset file containing random points in the unit hypercube.
+    Generates a dataset file containing random data points in the unit hypercube.
 
     The first line of the generated file contains an integer value that represents the number of
     data points contained in the subsequent lines. Each data point is represented by a
@@ -28,7 +28,7 @@ def generate_dataset(points, dimension, output_filename, random_seed=None):
         # Write the number of data points in the first line of the output file
         print(points, file=output_file)
 
-        # Write one point per line, with the coordinates separated by a whitespace
+        # Write one data point per line, with the coordinates separated by a whitespace
         for _ in range(points):
             coordinates = [f'{random.random():.10f}' for _ in range(dimension)]
             print(' '.join(coordinates), file=output_file)
@@ -57,7 +57,7 @@ def parse_positive_int(string):
 if __name__ == '__main__':
     # Define the argument parser and parse the actual command line arguments
     argumentParser = argparse.ArgumentParser(
-        description='Generate a dataset file containing random points in the unit hypercube.',
+        description='Generate a dataset file containing random data points in the unit hypercube.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     argumentParser.add_argument('-p', '--points', default=100, type=parse_positive_int,
         help='number of data points')

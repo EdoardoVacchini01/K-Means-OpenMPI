@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 
     //TODO: gather all clustered points and print them
     if (rank == 0) {
-        printCentroids(centroids, nClusters);
+        printCentroids(centroids, nClusters, stdout);
         free(points);
     }
 

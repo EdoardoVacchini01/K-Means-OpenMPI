@@ -1,9 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "k_means_clustering_utils.h"
 
+/**
+ * @brief Length of the buffer that is used to read each line of the dataset file.
+ */
 #define BUFFER_LENGTH 4096
 
 
@@ -26,22 +28,21 @@ void printPoints(point_t *points, unsigned int nPoints) {
 }
 
 
-void printCentroid(centroid_t *centroid) {
+void printCentroid(centroid_t *centroid, FILE *outputFile) {
     unsigned int coordinate = 0;
 
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-        printf("%lf%s", centroid->coordinates[coordinate],
+        fprintf(outputFile, "%lf%s", centroid->coordinates[coordinate],
             (coordinate < DIMENSION - 1) ? " " : "\n");
     }
 }
 
 
-void printCentroids(centroid_t *centroids, unsigned int nClusters) {
+void printCentroids(centroid_t *centroids, unsigned int nClusters, FILE *outputFile) {
     unsigned int cluster = 0;
 
     for (cluster = 0; cluster < nClusters; cluster++) {
-        printf("Centroid of cluster #%d: ", cluster);
-        printCentroid(centroids + cluster);
+        printCentroid(centroids + cluster, outputFile);
     }
 }
 
@@ -155,7 +156,7 @@ unsigned int readDataset(const char *path, point_t **points) {
     unsigned int point = 0;
     unsigned int tokens = 0;
     char *token = NULL;
-    char coordinatesDelimiter[] = " ";
+    const char coordinatesDelimiter[] = " ";
 
     file = fopen(path, "r");
     if (file == NULL) {
@@ -191,5 +192,6 @@ unsigned int readDataset(const char *path, point_t **points) {
         point++;
     }
 
+    fclose(file);
     return nPoints;
 }
