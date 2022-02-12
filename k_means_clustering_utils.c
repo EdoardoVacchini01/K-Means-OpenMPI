@@ -13,7 +13,8 @@ void printPoint(point_t *point) {
     unsigned int coordinate = 0;
 
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-        printf("%lf%s", point->coordinates[coordinate], (coordinate < DIMENSION - 1) ? " " : "\n");
+        printf("%.10lf%s", point->coordinates[coordinate],
+            (coordinate < DIMENSION - 1) ? " " : "\n");
     }
 }
 
@@ -22,7 +23,6 @@ void printPoints(point_t *points, unsigned int nPoints) {
     unsigned int point = 0;
 
     for (point = 0; point < nPoints; point++) {
-        printf("Point #%d: ", point);
         printPoint(points + point);
     }
 }
@@ -32,7 +32,7 @@ void printCentroid(centroid_t *centroid, FILE *outputFile) {
     unsigned int coordinate = 0;
 
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-        fprintf(outputFile, "%lf%s", centroid->coordinates[coordinate],
+        fprintf(outputFile, "%.10lf%s", centroid->coordinates[coordinate],
             (coordinate < DIMENSION - 1) ? " " : "\n");
     }
 }

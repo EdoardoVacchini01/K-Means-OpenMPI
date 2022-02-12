@@ -6,6 +6,7 @@ import sys
 
 if __name__ == '__main__':
     # Read the data points of the dataset
+    print('Reading the dataset file...')
     points = pd.read_csv(sys.argv[1] if len(sys.argv) > 1 else 'dataset.txt', sep=' ', header=None,
         skiprows=[0])
 
@@ -16,9 +17,15 @@ if __name__ == '__main__':
     max_iterations = int(sys.argv[4]) if len(sys.argv) > 4 else 100
 
     # Run K-Means with the selected settings using the data points of the dataset
+    print('Clustering the data points...')
     k_means = KMeans(n_clusters=n_clusters, init=points.iloc[0:n_clusters], n_init=1,
         max_iter=max_iterations, tol=0.0, algorithm='full')
     fitted_k_means = k_means.fit(points)
+
+    # Print the centroids to stdout
+    print('Clustering process completed.\n\nCentroids:')
+    for centroid in fitted_k_means.cluster_centers_:
+        print(' '.join([f'{coordinate:.10f}' for coordinate in centroid]))
 
     # Print the centroids to the output file
     with open(sys.argv[2] if len(sys.argv) > 2 else 'centroids.txt', 'w') as output_file:
