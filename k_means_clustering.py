@@ -20,7 +20,7 @@ if __name__ == '__main__':
         max_iter=max_iterations, tol=0.0, algorithm='full')
     fitted_k_means = k_means.fit(points)
 
-    # Write the centroids to the output file
-    with open(sys.argv[2] if len(sys.argv) > 2 else 'centroids.txt', 'w') as outputFile:
+    # Print the centroids to the output file
+    with open(sys.argv[2] if len(sys.argv) > 2 else 'centroids.txt', 'w') as output_file:
         for centroid in fitted_k_means.cluster_centers_:
-            print(' '.join([f'{coordinate:.10}' for coordinate in centroid]), file=outputFile)
+            print(' '.join([f'{coordinate:.10f}' for coordinate in centroid]), file=output_file)
