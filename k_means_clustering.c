@@ -7,12 +7,12 @@
 int main(int argc, char *argv[]) {
     point_t *points = NULL;
     unsigned int nPoints = 0;
-    unsigned int nClusters = (argc > 2) ? atoi(argv[2]) : 3;
+    unsigned int nClusters = (argc > 3) ? atoi(argv[3]) : 3;
     centroid_t *centroids = NULL;
     prototype_t *prototypes = NULL;
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
-    unsigned int maxIterations = (argc > 3) ? atoi(argv[3]) : 100;
+    unsigned int maxIterations = (argc > 4) ? atoi(argv[4]) : 100;
     FILE *outputFile = NULL;
 
     printf("Reading the dataset file...\n");
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     printf("Clustering process completed.\n\n");
     printCentroids(centroids, nClusters, stdout);
 
-    outputFile = fopen((argc > 4) ? argv[4] : "out.txt", "w");
+    outputFile = fopen((argc > 2) ? argv[2] : "centroids.txt", "w");
     if (outputFile != NULL) {
         printCentroids(centroids, nClusters, outputFile);
         fclose(outputFile);
