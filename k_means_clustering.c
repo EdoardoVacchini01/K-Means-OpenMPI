@@ -15,22 +15,22 @@ int main(int argc, char *argv[]) {
     unsigned int maxIterations = (argc > 4) ? atoi(argv[4]) : 100;
     FILE *outputFile = NULL;
 
+    // Read the data points of the dataset
     printf("Reading the dataset file...\n");
-
     nPoints = readDataset((argc > 1) ? argv[1] : "dataset.txt", &points);
     if (nPoints == 0) {
         printf("An error occurred while reading the dataset file.\n");
         return EXIT_FAILURE;
     }
 
+    // Check if the number of clusters exceeds the number of data points of the dataset
     if (nClusters > nPoints) {
         free(points);
         printf("The number of clusters must be less than or equal to the number of data points.\n");
         return EXIT_FAILURE;
     }
 
-    printf("Clustering the data points...\n");
-
+    // Allocate the memory for the centroids
     centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids));
     if (centroids == NULL) {
         free(points);
@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Allocate the memory for the prototypes
     prototypes = (prototype_t*) malloc(nClusters * sizeof(*prototypes));
     if (prototypes == NULL) {
         free(points);
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Run K-Means with the selected settings using the data points of the dataset
+    printf("Clustering the data points...\n");
     initCentroids(centroids, nClusters, points);
     do {
         initPrototypes(prototypes, nClusters);
@@ -55,13 +58,17 @@ int main(int argc, char *argv[]) {
         iteration++;
     } while((iteration < maxIterations) && clustersChanged);
 
-    printf("Clustering process completed.\n\n");
+    // Print the centroids to stdout
+    printf("Clustering process completed.\n\nCentroids:\n");
     printCentroids(centroids, nClusters, stdout);
 
+    // Print the centroids to the output file
     outputFile = fopen((argc > 2) ? argv[2] : "centroids.txt", "w");
     if (outputFile != NULL) {
         printCentroids(centroids, nClusters, outputFile);
         fclose(outputFile);
+    } else {
+        printf("\nAn error occurred while opening the output file.\n");
     }
 
     free(points);
