@@ -112,7 +112,6 @@ void updatePrototype(prototype_t *prototype, point_t *point) {
     for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
         prototype->pointsCoordinatesSum[coordinate] += point->coordinates[coordinate];
     }
-
     prototype->nPoints++;
 }
 
