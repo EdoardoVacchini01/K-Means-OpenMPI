@@ -7,7 +7,7 @@
 
 
 /**
- * @brief Initializes MPI data types for points, centroids and prototypes.
+ * @brief Initializes the MPI data types for points, centroids and prototypes.
  *
  * Each MPI_Datatype is initialized by creating an MPI type struct with the corresponding number of
  * fields of specific lengths, offsets and types.
