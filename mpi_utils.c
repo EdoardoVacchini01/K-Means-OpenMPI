@@ -26,17 +26,17 @@ void initDatatypes(MPI_Datatype *pointDatatype, MPI_Datatype *centroidDatatype,
 }
 
 
-void reducePrototypes(void *in, void *inout, int *len, MPI_Datatype *dptr) {
+void reducePrototypes(void *inArray, void *inOutArray, int *nClusters, MPI_Datatype *datatype) {
     unsigned int cluster = 0;
     unsigned int coordinate = 0;
-    prototype_t *inPrototype = (prototype_t*) in;
-    prototype_t *inoutPrototype = (prototype_t*) inout;
+    prototype_t *inPrototypeArray = (prototype_t*) inArray;
+    prototype_t *inOutPrototypeArray = (prototype_t*) inOutArray;
 
-    for (cluster = 0; cluster < *len; cluster++) {
+    for (cluster = 0; cluster < *nClusters; cluster++) {
         for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-            (inoutPrototype + cluster)->pointsCoordinatesSum[coordinate] +=
-                (inPrototype + cluster)->pointsCoordinatesSum[coordinate];
+            (inOutPrototypeArray + cluster)->pointsCoordinatesSum[coordinate] +=
+                (inPrototypeArray + cluster)->pointsCoordinatesSum[coordinate];
         }
-        (inoutPrototype + cluster)->nPoints += (inPrototype + cluster)->nPoints;
+        (inOutPrototypeArray + cluster)->nPoints += (inPrototypeArray + cluster)->nPoints;
     }
 }
