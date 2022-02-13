@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
     unsigned int maxIterations = (argc > 4) ? atoi(argv[4]) : 100;
+    FILE *outputFile = NULL;
 
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
