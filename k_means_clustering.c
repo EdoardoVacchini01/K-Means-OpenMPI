@@ -72,10 +72,12 @@ int main(int argc, char *argv[]) {
         (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_nsec - startTime.tv_nsec) * 1e-9);
     printCentroids(centroids, nClusters, stdout);
 
-    // Print the centroids to the output file
-    outputFile = fopen((argc > 2) ? argv[2] : "centroids.txt", "w");
+    // Print the centroids and the labels of the data points to the output file
+    outputFile = fopen((argc > 2) ? argv[2] : "clustering.txt", "w");
     if (outputFile != NULL) {
         printCentroids(centroids, nClusters, outputFile);
+        fprintf(outputFile, "\n");
+        printPointLabels(points, nPoints, outputFile);
         fclose(outputFile);
     } else {
         printf("\nAn error occurred while opening the output file.\n");

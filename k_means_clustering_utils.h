@@ -52,20 +52,13 @@ typedef struct {
 
 
 /**
- * @brief Prints the coordinates of the data point given as parameter to stdout.
+ * @brief Prints the clustering labels of the data points given as parameter.
  *
- * @param point A pointer to the data point to print.
+ * @param points A pointer to the array of data points of which to print the labels.
+ * @param nPoints The number of data points of which to print the labels.
+ * @param outputFile A pointer to the file to which the labels will be printed.
  */
-void printPoint(point_t *point);
-
-
-/**
- * @brief Prints the coordinates of the data points given as parameter to stdout.
- *
- * @param points A pointer to the array of data points to print.
- * @param nPoints The number of data points to print.
- */
-void printPoints(point_t *points, unsigned int nPoints);
+void printPointLabels(point_t *points, unsigned int nPoints, FILE *outputFile);
 
 
 /**
