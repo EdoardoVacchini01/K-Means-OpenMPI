@@ -9,21 +9,11 @@
 #define BUFFER_LENGTH 4096
 
 
-void printPoint(point_t *point) {
-    unsigned int coordinate = 0;
-
-    for (coordinate = 0; coordinate < DIMENSION; coordinate++) {
-        printf("%.10lf%s", point->coordinates[coordinate],
-            (coordinate < DIMENSION - 1) ? " " : "\n");
-    }
-}
-
-
-void printPoints(point_t *points, unsigned int nPoints) {
+void printPointLabels(point_t *points, unsigned int nPoints, FILE *outputFile) {
     unsigned int point = 0;
 
     for (point = 0; point < nPoints; point++) {
-        printPoint(points + point);
+        fprintf(outputFile, "%d\n", (points + point)->clusterId);
     }
 }
 

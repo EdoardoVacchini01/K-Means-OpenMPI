@@ -29,17 +29,20 @@ if __name__ == '__main__':
     print('Clustering the data points...')
     k_means = KMeans(n_clusters=n_clusters, init=points.iloc[0:n_clusters], n_init=1,
         max_iter=max_iterations, tol=0.0, algorithm='full')
-    fitted_k_means = k_means.fit(points)
+    point_labels = k_means.fit_predict(points)
 
     # Print the centroids to stdout
     print('Clustering process completed.\n\nCentroids:')
-    for centroid in fitted_k_means.cluster_centers_:
+    for centroid in k_means.cluster_centers_:
         print(' '.join([f'{coordinate:.10f}' for coordinate in centroid]))
 
-    # Print the centroids to the output file
+    # Print the centroids and the labels of the data points to the output file
     try:
-        with open(sys.argv[2] if len(sys.argv) > 2 else 'centroids.txt', 'w') as output_file:
-            for centroid in fitted_k_means.cluster_centers_:
+        with open(sys.argv[2] if len(sys.argv) > 2 else 'clustering.txt', 'w') as output_file:
+            for centroid in k_means.cluster_centers_:
                 print(' '.join([f'{coordinate:.10f}' for coordinate in centroid]), file=output_file)
+            print(file=output_file)
+            for point_label in point_labels:
+                print(point_label, file=output_file)
     except:
         print('\nAn error occurred while opening the output file.');
