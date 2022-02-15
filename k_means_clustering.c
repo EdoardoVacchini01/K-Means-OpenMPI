@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "k_means_clustering_utils.h"
 #include "mpi_utils.h"
@@ -19,6 +20,7 @@ int main(int argc, char *argv[]) {
     int *pointsSendCounts = NULL;
     int *pointsDisplacements = NULL;
     unsigned int process = 0;
+    struct timespec startTime = {0};
     point_t *scatteredPoints = NULL;
     unsigned int nClusters = (argc > 3) ? atoi(argv[3]) : 3;
     centroid_t *centroids = NULL;
@@ -26,6 +28,7 @@ int main(int argc, char *argv[]) {
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
     unsigned int maxIterations = (argc > 4) ? atoi(argv[4]) : 100;
+    struct timespec endTime = {0};
     FILE *outputFile = NULL;
 
     // Initialize the MPI environment
@@ -80,6 +83,9 @@ int main(int argc, char *argv[]) {
             *(pointsDisplacements + process) = (process == 0) ?
                 0 : (*(pointsDisplacements + process - 1) + *(pointsSendCounts + process - 1));
         }
+
+        // Record the K-Means start moment in time
+        clock_gettime(CLOCK_REALTIME, &startTime);
     }
 
     // Broadcast nScatteredPoints to all processes
@@ -153,8 +159,12 @@ int main(int argc, char *argv[]) {
 
     // TODO: Gather all clustered points and print them ********************************
     if (rank == 0) {
+        // Record the K-Means end moment in time
+        clock_gettime(CLOCK_REALTIME, &endTime);
+
         // Print the centroids to stdout
-        printf("Clustering process completed.\n\nCentroids:\n");
+        printf("Clustering process completed in %.06lf s.\n\nCentroids:\n",
+            (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_nsec - startTime.tv_nsec) * 1e-9);
         printCentroids(centroids, nClusters, stdout);
 
         // Print the centroids to the output file
