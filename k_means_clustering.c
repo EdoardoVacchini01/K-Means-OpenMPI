@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "k_means_clustering_utils.h"
 
@@ -8,11 +9,13 @@ int main(int argc, char *argv[]) {
     point_t *points = NULL;
     unsigned int nPoints = 0;
     unsigned int nClusters = (argc > 3) ? atoi(argv[3]) : 3;
+    struct timespec startTime = {0};
     centroid_t *centroids = NULL;
     prototype_t *prototypes = NULL;
     unsigned int clustersChanged = 0;
     unsigned int iteration = 0;
     unsigned int maxIterations = (argc > 4) ? atoi(argv[4]) : 100;
+    struct timespec endTime = {0};
     FILE *outputFile = NULL;
 
     // Read the data points of the dataset
@@ -29,6 +32,9 @@ int main(int argc, char *argv[]) {
         printf("The number of clusters must be less than or equal to the number of data points.\n");
         return EXIT_FAILURE;
     }
+
+    // Record the K-Means start moment in time
+    clock_gettime(CLOCK_REALTIME, &startTime);
 
     // Allocate the memory for the centroids
     centroids = (centroid_t*) malloc(nClusters * sizeof(*centroids));
@@ -58,8 +64,12 @@ int main(int argc, char *argv[]) {
         iteration++;
     } while((iteration < maxIterations) && clustersChanged);
 
+    // Record the K-Means end moment in time
+    clock_gettime(CLOCK_REALTIME, &endTime);
+
     // Print the centroids to stdout
-    printf("Clustering process completed.\n\nCentroids:\n");
+    printf("Clustering process completed in %.06lf s.\n\nCentroids:\n",
+        (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_nsec - startTime.tv_nsec) * 1e-9);
     printCentroids(centroids, nClusters, stdout);
 
     // Print the centroids to the output file
