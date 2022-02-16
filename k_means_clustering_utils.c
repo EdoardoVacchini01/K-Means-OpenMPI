@@ -171,7 +171,7 @@ unsigned int readDataset(const char *path, point_t **points) {
             token = strtok(NULL, coordinatesDelimiter);
         }
 
-        if (tokens != DIMENSION) {
+        if ((tokens != DIMENSION) || (token != NULL)) {
             fclose(file);
             free(points);
             return 0;
