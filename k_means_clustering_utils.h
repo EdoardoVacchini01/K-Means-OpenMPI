@@ -6,7 +6,7 @@
 /**
  * @brief Dimension of the space in which the data points lie.
  */
-#define DIMENSION 2
+#define DIMENSION 3
 
 /**
  * @brief A single data point of the dataset.

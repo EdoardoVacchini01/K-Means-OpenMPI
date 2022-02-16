@@ -61,7 +61,7 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     argumentParser.add_argument('-p', '--points', default=100, type=parse_positive_int,
         help='number of data points')
-    argumentParser.add_argument('-d', '--dimension', default=2, type=parse_positive_int,
+    argumentParser.add_argument('-d', '--dimension', default=3, type=parse_positive_int,
         help='dimension of the space in which the data points lie')
     argumentParser.add_argument('-o', '--output-filename', default='dataset.txt', type=str,
         help='name of the output file')
