@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
         updateCentroids(centroids, prototypes, nClusters);
 
         iteration++;
-    } while((iteration < maxIterations) && clustersChanged);
+    } while ((iteration < maxIterations) && clustersChanged);
 
     // Record the K-Means end moment in time
     clock_gettime(CLOCK_REALTIME, &endTime);
