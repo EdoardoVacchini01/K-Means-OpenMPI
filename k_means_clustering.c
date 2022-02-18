@@ -16,10 +16,10 @@ int main(int argc, char *argv[]) {
     MPI_Op reducePrototypesOp = 0;
     point_t *points = NULL;
     unsigned int nPoints = 0;
-    unsigned int nScatteredPoints = 0;
     int *pointsSendCounts = NULL;
     int *pointsDisplacements = NULL;
     unsigned int process = 0;
+    unsigned int nScatteredPoints = 0;
     struct timespec startTime = {0};
     point_t *scatteredPoints = NULL;
     unsigned int nClusters = (argc > 3) ? atoi(argv[3]) : 3;
@@ -51,10 +51,6 @@ int main(int argc, char *argv[]) {
             MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }
 
-        // Get the number of data points that will be handled by each process (except for the
-        // process with rank 0, in general)
-        nScatteredPoints = nPoints / communicatorSize;
-
         // Allocate the memory for the array that will contain the number of data points that each
         // process should handle
         pointsSendCounts = (int*) malloc(communicatorSize * sizeof(*pointsSendCounts));
@@ -74,12 +70,12 @@ int main(int argc, char *argv[]) {
             MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }
 
-        // Initialize pointsSendCounts and pointsDisplacements (in general, the process with rank 0
-        // will handle more data points than the other processes because the number of data points
-        // is not guaranteed to be a multiple of the number of processes)
+        // Initialize pointsSendCounts and pointsDisplacements (in general, processes with a lower
+        // rank will handle one more data point than the other processes because the number of data
+        // points is not guaranteed to be a multiple of the total number of processes)
         for (process = 0; process < communicatorSize; process++) {
-            *(pointsSendCounts + process) = (process == 0) ?
-                (nScatteredPoints + (nPoints % communicatorSize)) : nScatteredPoints;
+            *(pointsSendCounts + process) = (nPoints / communicatorSize) +
+                ((process < (nPoints % communicatorSize)) ? 1 : 0);
             *(pointsDisplacements + process) = (process == 0) ?
                 0 : (*(pointsDisplacements + process - 1) + *(pointsSendCounts + process - 1));
         }
@@ -88,15 +84,8 @@ int main(int argc, char *argv[]) {
         clock_gettime(CLOCK_REALTIME, &startTime);
     }
 
-    // Broadcast nScatteredPoints to all processes
-    MPI_Bcast(&nScatteredPoints, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-
-    // The process with rank 0 will handle, in general, a different number of data points from the
-    // other processes, so set its nScatteredPoints value equal to the first value in the
-    // pointsSendCounts array)
-    if (rank == 0) {
-        nScatteredPoints = *pointsSendCounts;
-    }
+    // Scatter to each process the number of points that it will have to handle
+    MPI_Scatter(pointsSendCounts, 1, MPI_INT, &nScatteredPoints, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Allocate the memory for the scattered points
     scatteredPoints = (point_t*) malloc(nScatteredPoints * sizeof(*points));
