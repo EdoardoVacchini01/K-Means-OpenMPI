@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
         // data point that each process will handle relative to the array of all data points
         pointsDisplacements = (int*) malloc(communicatorSize * sizeof(*pointsDisplacements));
         if (pointsDisplacements == NULL) {
+            free(pointsSendCounts);
             printf("An error occurred while allocating the memory for the array that should "
                 "contain the displacement indices of the first data point that each process "
                 "should handle relative to the array of all data points.\n");
@@ -92,6 +93,8 @@ int main(int argc, char *argv[]) {
     if (scatteredPoints == NULL) {
         if (rank == 0) {
             free(points);
+            free(pointsSendCounts);
+            free(pointsDisplacements);
         }
         printf("An error occurred while allocating the memory for the scattered points.\n");
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
@@ -106,6 +109,8 @@ int main(int argc, char *argv[]) {
     if (centroids == NULL) {
         if (rank == 0) {
             free(points);
+            free(pointsSendCounts);
+            free(pointsDisplacements);
         }
         free(scatteredPoints);
         printf("An error occurred while allocating the memory for the centroids.\n");
@@ -123,6 +128,8 @@ int main(int argc, char *argv[]) {
     if (prototypes == NULL) {
         if (rank == 0) {
             free(points);
+            free(pointsSendCounts);
+            free(pointsDisplacements);
         }
         free(scatteredPoints);
         free(centroids);
@@ -171,6 +178,8 @@ int main(int argc, char *argv[]) {
         }
 
         free(points);
+        free(pointsSendCounts);
+        free(pointsDisplacements);
     }
 
     MPI_Finalize();
