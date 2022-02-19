@@ -36,10 +36,10 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &communicatorSize);
 
-    // Initialize the MPI data types for points, centroids and prototypes.
+    // Initialize the MPI data types for points, centroids and prototypes
     initDatatypes(&pointDatatype, &centroidDatatype, &prototypeDatatype);
 
-    // Define an MPI_Op that performs a reduction operation on two arrays of prototypes.
+    // Define an MPI_Op that performs a reduction operation on two arrays of prototypes
     MPI_Op_create(reducePrototypes, 1, &reducePrototypesOp);
 
     if (rank == 0) {
