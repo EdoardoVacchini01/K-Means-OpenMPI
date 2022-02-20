@@ -42,3 +42,5 @@ $ mpirun -n N executableFile [datasetFile] [outputFile] [nClusters] [maxIteratio
 In the two commands above, ```N``` is the number of cores you want to execute the parallel application on, ```executableFile``` is the name you want to give to the executable application, ```datasetFile``` is the file containing the dataset, ```outputFile``` is the output file, ```nClusters``` is the number of clusters you want the algorithm to find and ```maxIterations``` is the maximum number of iterations the algorithm will go through.
 
 Every parameter is optional (a default value will be used if a parameter is not provided), but the order of the parameters must match the one reported previously. If not set, ```nClusters``` will default to 3 while ```maxIterations``` will default to 100.
+
+When the program has finished running, ```outputFile``` contains the list of centroids followed by the cluster identifiers that have been assigned to the data points, in the same order as they appear in the dataset file.
